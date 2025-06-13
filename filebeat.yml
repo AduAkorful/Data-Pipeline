@@ -1,0 +1,55 @@
+# ============================== Filebeat Configuration ===============================
+
+filebeat.inputs:
+
+# Input for log files from Kafka
+- type: docker
+  containers:
+    path: "/var/lib/docker/containers"
+    stream: "all"
+    indices:
+      - "docker-*"
+
+# You can add additional inputs for MySQL and Postgres if necessary
+# Input for log files from MySQL
+- type: log
+  enabled: true
+  paths:
+    - /var/lib/docker/volumes/mysql-data/_data/*.log
+  fields:
+    app: mysql
+  fields_under_root: true
+
+# Input for log files from Postgres
+- type: log
+  enabled: true
+  paths:
+    - /var/lib/docker/volumes/postgres-data/_data/*.log
+  fields:
+    app: postgres
+  fields_under_root: true
+
+# ============================== Outputs ==============================
+
+# Output to Kafka
+output.kafka:
+  hosts: ["kafka:9092"]  # Use the Kafka service name defined in your docker-compose.yml
+  topic: "your-log-topic"  # Specify the topic you want to send the logs to
+  codec.json:
+    pretty: false
+
+# ============================== Processors ==============================
+
+processors:
+  - add_docker_metadata: ~
+  - add_host_metadata: ~
+
+# ============================== Logging ==============================
+
+logging.level: info
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644

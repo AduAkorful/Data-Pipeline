@@ -1,0 +1,96 @@
+Data Pipeline Project Report
+Introduction
+This report outlines the architecture and implementation of a data pipeline project utilizing Apache Kafka as the central messaging system. The goal of this project is to build a scalable and reliable pipeline for ingesting data from various sources (MySQL and PostgreSQL) and monitoring log files using Filebeat.
+
+Architecture Overview
+The data pipeline consists of the following key components:
+
+Apache Kafka: A distributed streaming platform that allows publishing and subscribing to streams of records.
+Zookeeper: A centralized service for maintaining configuration information, naming, and providing distributed synchronization.
+MySQL and PostgreSQL: Relational database management systems used for data storage and retrieval.
+Filebeat: A lightweight shipper for forwarding and centralizing log data.
+Docker: Used for containerizing all services to ensure consistent environments across development and production.
+Architecture Diagram
+(A diagram showing the architecture of the data pipeline would typically be included here)
+
+Components and Configuration
+1. Docker Compose Configuration
+The entire system is defined in a docker-compose.yml file, which orchestrates the deployment of all components. Below is a breakdown of each service defined in the configuration:
+
+Zookeeper
+Image: confluentinc/cp-zookeeper:latest
+Ports: Exposes port 2181 for client connections.
+Environment Variables:
+ZOOKEEPER_SERVER_ID: Unique identifier for the server.
+ZOOKEEPER_TICK_TIME: Basic time unit in milliseconds used by Zookeeper.
+Health Check: Uses a command to check if Zookeeper is running on the specified port.
+Kafka
+Image: confluentinc/cp-kafka:latest
+Ports:
+Exposes 19092 for external clients.
+Exposes 19093 for internal communication.
+Depends on: Waits for Zookeeper to be healthy before starting.
+Environment Variables:
+KAFKA_BROKER_ID: Unique identifier for the Kafka broker.
+KAFKA_ZOOKEEPER_CONNECT: Connection string to Zookeeper.
+KAFKA_ADVERTISED_LISTENERS: Addresses for external and internal clients.
+Health Check: Uses a command to check if Kafka is reachable on the specified port.
+Additional Kafka Broker (kafka2)
+Configured similarly to the first Kafka broker, with its unique KAFKA_BROKER_ID and port configurations.
+Kafka Connect
+Image: confluentinc/cp-kafka-connect:latest
+Ports: Exposes 8083 for REST API interactions.
+Depends on: Waits for both Kafka brokers to be healthy.
+Environment Variables:
+Configured to use the two Kafka brokers for data ingestion.
+Specifies converter settings and storage topics.
+MySQL
+Image: mysql:latest
+Environment Variables: Sets up a root password, database name, user, and password.
+Ports: Exposes 3306 for client connections.
+PostgreSQL
+Image: postgres:latest
+Environment Variables: Configures the user, password, and database name.
+Ports: Exposes 5432 for client connections.
+2. Volumes and Networks
+Volumes: Persist data for Zookeeper, Kafka, MySQL, PostgreSQL, and Kafka Connect to ensure data durability.
+Networks: All services are connected via a bridge network named kafka-network, enabling inter-service communication.
+Installation and Configuration Steps
+Set Up Docker Environment:
+
+Ensure Docker and Docker Compose are installed on your system.
+Create Project Directory:
+
+Create a directory for your project and navigate into it.
+bash
+Copy code
+mkdir ~/Sigma
+cd ~/Sigma
+Create docker-compose.yml File:
+
+Copy the provided configuration into a file named docker-compose.yml.
+Start the Services:
+
+Use Docker Compose to start all services defined in the configuration.
+bash
+Copy code
+docker-compose up -d
+Check Service Status:
+
+Verify that all services are running correctly.
+bash
+Copy code
+docker-compose ps
+Install and Configure Filebeat:
+
+Install Filebeat to monitor logs and forward them to Kafka.
+Configure Filebeat modules as needed for your specific log formats.
+Testing Kafka Connectors:
+
+Create Kafka topics for MySQL and PostgreSQL using Kafka command-line tools or Kafka Connect configurations.
+Testing and Validation
+Validate that all services are healthy and reachable.
+Test Kafka's ability to ingest messages from MySQL and PostgreSQL.
+Monitor logs from Filebeat to ensure log files are being shipped correctly.
+Conclusion
+This data pipeline setup provides a robust framework for streaming data from relational databases and monitoring logs. By utilizing Docker, all components can be easily managed and scaled as needed. Further enhancements could include implementing additional data sources, optimizing performance, and integrating monitoring tools for better observability.
